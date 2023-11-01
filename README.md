@@ -1,1 +1,1 @@
-# NeuroInspiredSystemEngineering-
+# Neuro-Inspired System Engineering
