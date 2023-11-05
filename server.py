@@ -10,11 +10,7 @@ bufferSize  = 1024
 
  
 
-msgFromServer       = "Hello UDP Client"
 
-bytesToSend         = str.encode(msgFromServer)
-
- 
 
 # Create a datagram socket
 
@@ -49,7 +45,8 @@ while(True):
     print(clientIP)
 
    
-
+    message = input("Enter message to send:")
+    bytesToSend         = str.encode(message)
     # Sending a reply to client
 
     UDPServerSocket.sendto(bytesToSend, address)
