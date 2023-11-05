@@ -1,6 +1,9 @@
 import cv2 as cv
 from cvzone.HandTrackingModule import HandDetector
 import socket
+import time
+import icecream as ic
+import keyboard
 import pickle
 import struct
 
@@ -37,7 +40,7 @@ while True:
         for hand in hands:
             # Get the list of landmarks (points)
             lmList = hand['lmList']
-            # print(lmList)
+            refCoor = lmList[0]
     
         # print(hand) # this is a dictionary; we are interested in lmList and type
         # but it also prints out bbox and center of it
@@ -50,11 +53,11 @@ while True:
         # split them so that they are contained in only one list
         # without being split in sublists  
             for lm in lmList:
-                data.extend([lm[0], height - lm[1], lm[2]]) # upper left corner = (0,0) in opencv; lower right corner = (0,0) in unity
+                data.extend([lm[0] - refCoor[0], lm[1] - refCoor[1], lm[2] - refCoor[2]]) # upper left corner = (0,0) in opencv; lower right corner = (0,0) in unity
             # processing data and sending clean data to unity project
-            # print(data)
+
 
     image = cv.resize(image, (0, 0), None, 0.5, 0.5)
     cv.imshow('Stream', image)
-
-    cv.waitKey(1)
+    cv .waitKey(1)
+    
