@@ -9,12 +9,15 @@ from cvzone.HandTrackingModule import HandDetector
 import numpy as np 
 import math 
 import copy 
-
+from sklearn import tree
+import pickle
 
 class Client:
 
     def __init__(self,):
         # Set up main window
+        self.save = False 
+        self.save_file = "/Users/jan-erikhuhne/Documents/NISE/NeuroInspiredSystemEngineering-/data/zero.txt"
         self.root = tk.Tk()
         self.root.geometry("920x650")
         self.root.resizable(False, False)
@@ -55,7 +58,6 @@ class Client:
         self.collect_next_char_event = Event()
         self.collect_next_char_event.clear()
         self.next_char_collect_event = Event()
-        self.save_file = "./two.txt"
         self.next_char_collect_event.clear()
         self.word_var = tk.StringVar()
         self.word_text = tk.Label(self.root, text="Word ", bd=0, bg="white", font=("'Segoe UI", 24))
@@ -71,6 +73,7 @@ class Client:
         #detector
         self.detector = HandDetector(maxHands = 2, detectionCon = 0.8) 
 
+        self.clasifier = pickle.load(open("/Users/jan-erikhuhne/Documents/NISE/NeuroInspiredSystemEngineering-/models/dt_classifier.pickle", "rb"))
         # start app 
         self.root.mainloop()
 
@@ -146,15 +149,22 @@ class Client:
                 for lm in lmList:
                     data.extend([lm[0], self.height - lm[1], lm[2]]) # upper left corner = (0,0) in opencv; lower right corner = (0,0) in unity
                 # processing data and sending clean data to unity project
-    #             print(lmList)
+                # print(lmList)
                 Handpoints = np.array(lmList)
-    #             print(Handpoints)
+                # print(Handpoints)
                 EU = np.array(self.calculateDistances(Handpoints))
+                
                 EU /= EU.max()
-                print(EU)
+                if self.save:
+                    with open(self.save_file, "a") as f:
+                        for e in EU:
+                            f.write(str(e) + " ")
+                        f.write("\n")
+                    
+                
                 #print(EU[9])
-            
-                return self.detectHandMovement(EU)
+                return int(self.clasifier.predict(EU[np.newaxis, :])[0])
+                #return self.detectHandMovement(EU)
         return "Empty"
     def calculateDistances(self, handPoints):
         eu = [0.0] * 11
@@ -183,24 +193,25 @@ class Client:
         # Check the distances, compare with threshold, detect the hand movement
         # and play corresponding chords based on thresholds
         # ZERO
-        if (eu[0] < 40) and (eu[1] < 40) and (eu[2] < 40) and (eu[3] < 40):
-            sign = '0'
-            print(sign)
+        #if (eu[0] < 40) and (eu[1] < 40) and (eu[2] < 40) and (eu[3] < 40):
+        #    sign = '0'
+        #    print(sign)
         # ONE
         #elif (eu[0] > 80) and (eu[1] < 50) and (eu[2] < 70) and (eu[3] < 80):
-        elif (eu[5] > 0.8) and (eu[6] < 0.8) and (eu[4] < 0.2):
+        if (eu[6] > 0.8) and (eu[7] < 0.5) and (eu[4] < 0.2):
             sign = '1'
-            print(sign)
         # TWO
         #elif (eu[0] > 70) and (eu[1] > 7) and (eu[2] < 40) and (eu[3] < 40) and (eu[4] < 30):
-        elif (eu[5] > 0.8) and (eu[6] > 0.8) and (eu[4] < 0.2):
+        elif (eu[5] < 0.6 and eu[6] > 0.8) and (eu[7] > 0.8) and (eu[4] < 0.2):
             sign = '2'
-            print(sign)
         # THREE 
-        elif (eu[5] > 60) and (eu[6] > 80) and (eu[7] > 80) and (eu[8] < 90) and (eu[9] < 90) and ( eu[4] < 40):
+        #elif (eu[5] > 60) and (eu[6] > 80) and (eu[7] > 80) and (eu[8] < 90) and (eu[9] < 90) and ( eu[4] < 40):
+        elif (eu[5] > 0.6 and eu[6] > 0.8) and (eu[7] > 0.8) and (eu[4] < 0.2):
                 sign = '3'
-                print(sign)
-
+                
+        else:
+            sign = 'None'   
+        """
         elif (eu[5] > 60) and (eu[6] > 50) and (eu[7] > 100) and (eu[8] > 100) and (eu[9] > 140) and (eu[10]< 30):
                 sign = '4'
                 print(sign)
@@ -229,8 +240,8 @@ class Client:
         elif (eu[0] < 30) and (eu[1] > 30) and (eu[2] > 30) and (eu[3] > 30):
             sign = '9'
             print(sign)
-        else:
-            sign = 'None'   
+        """
+        
         return sign
 
     def collect_char(self,):
@@ -242,19 +253,17 @@ class Client:
            
             collected_char = self.media_pipe_detection()
             print(collected_char)
-            if collected_char == "None":
+            if collected_char == "Empty":
                 # UDP thread to send 
                 #self.udp_send_thread = Thread(target=self.udp_send, args=(self.word_var.get(),))
                 #self.udp_send_thread.start()
                 self.word_var.set("")
-            elif collected_char == "Empty":
-                print("No character collected")
             else:
-                self.word_var.set(self.word_var.get() + collected_char)
+                self.word_var.set(self.word_var.get() + str(collected_char))
             
             
             self.next_char_collect_event.set()
-            time.sleep(0.1)
+            time.sleep(0.3)
 
     def udp_send(self, word_to_send):
         bytesToSend= str.encode(word_to_send)
