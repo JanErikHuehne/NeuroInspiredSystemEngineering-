@@ -1,6 +1,6 @@
 # get your local ip address: ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk '{print $2}'
 import socket
-
+from speech_synthesis_micAzure import generate_xml, generateSpeech
  
 localIP = input("Enter your IP-address:")
 
@@ -50,3 +50,6 @@ while(True):
     # Sending a reply to client
 
     UDPServerSocket.sendto(bytesToSend, address)
+
+    # Synthesize speech by TTS
+    _ = generateSpeech(text=generate_xml(message))

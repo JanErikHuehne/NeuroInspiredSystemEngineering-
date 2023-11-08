@@ -6,7 +6,7 @@ class VoiceName(Enum):
     Jenny       = "en-US-JennyMultilingualNeural"
     Prabhat     = "en-IN-PrabhatNeural"
 
-def generate_xml(text, voiceName, volume=None, rate=None, pitch=None):
+def generate_xml(text, voiceName=VoiceName.Jenny.value, volume=None, rate=None, pitch=None):
     xml = f'''<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
     xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-Us">
     <voice name="{voiceName}">
