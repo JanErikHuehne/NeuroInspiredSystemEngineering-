@@ -45,11 +45,11 @@ while(True):
     print(clientIP)
 
    
-    message = input("Enter message to send:")
-    bytesToSend         = str.encode(message)
+    #message = input("Enter message to send:")
+    #bytesToSend         = str.encode(message)
     # Sending a reply to client
 
-    UDPServerSocket.sendto(bytesToSend, address)
+    #UDPServerSocket.sendto(bytesToSend, address)
 
     # Synthesize speech by TTS
-    _ = generateSpeech(text=generate_xml(message))
+    # _ = generateSpeech(text=generate_xml(message))
