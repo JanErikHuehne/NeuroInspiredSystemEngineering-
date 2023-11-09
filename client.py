@@ -11,13 +11,14 @@ import math
 import copy 
 from sklearn import tree
 import pickle
+from pathlib import Path
 
 class Client:
 
     def __init__(self,):
         # Set up main window
-        self.save = False 
-        self.save_file = "C:/Users/m_keh/NeuroInspiredSystemEngineering-/data/nine.txt"
+        self.save = True 
+        self.save_file = Path("./data2/nine.txt").absolute()
         self.root = tk.Tk()
         self.root.geometry("920x650")
         self.root.resizable(False, False)
@@ -73,7 +74,7 @@ class Client:
         #detector
         self.detector = HandDetector(maxHands = 2, detectionCon = 0.8) 
 
-        self.clasifier = pickle.load(open("C:/Users/m_keh/NeuroInspiredSystemEngineering-/models/dt_classifier.pickle", "rb"))
+        self.clasifier = pickle.load(open("./models/dt_classifier.pickle", "rb"))
         # start app 
         self.root.mainloop()
 
@@ -85,7 +86,7 @@ class Client:
         for x in range(100):
             if self.stop_button_event.is_set():
                 return 
-            time.sleep(0.03)
+            time.sleep(0.008)
             variable.set(x)
         self.collect_next_char_event.set()
         self.next_char_collect_event.wait()
@@ -281,7 +282,7 @@ class Client:
 
     def udp_send(self, word_to_send):
         bytesToSend= str.encode(word_to_send)
-        self.udp_client_socket.sendto(bytesToSend, (self.server_ip.get(), int(self.server_port.get())))
+        #self.udp_client_socket.sendto(bytesToSend, (self.server_ip.get(), int(self.server_port.get())))
         print("Word send")
 
     def stop_button_pressed(self):
