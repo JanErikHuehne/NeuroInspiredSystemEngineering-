@@ -17,7 +17,7 @@ class Client:
     def __init__(self,):
         # Set up main window
         self.save = False 
-        self.save_file = "/Users/jan-erikhuhne/Documents/NISE/NeuroInspiredSystemEngineering-/data/zero.txt"
+        self.save_file = "/Users/jan-erikhuhne/Documents/NISE/NeuroInspiredSystemEngineering-/data/nine.txt"
         self.root = tk.Tk()
         self.root.geometry("920x650")
         self.root.resizable(False, False)
@@ -85,7 +85,7 @@ class Client:
         for x in range(100):
             if self.stop_button_event.is_set():
                 return 
-            time.sleep(0.02)
+            time.sleep(0.03)
             variable.set(x)
         self.collect_next_char_event.set()
         self.next_char_collect_event.wait()
@@ -255,8 +255,8 @@ class Client:
             print(collected_char)
             if collected_char == "Empty":
                 # UDP thread to send 
-                #self.udp_send_thread = Thread(target=self.udp_send, args=(self.word_var.get(),))
-                #self.udp_send_thread.start()
+                self.udp_send_thread = Thread(target=self.udp_send, args=(self.word_var.get(),))
+                self.udp_send_thread.start()
                 self.word_var.set("")
             else:
                 self.word_var.set(self.word_var.get() + str(collected_char))
