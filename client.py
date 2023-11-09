@@ -17,7 +17,7 @@ class Client:
     def __init__(self,):
         # Set up main window
         self.save = False 
-        self.save_file = "/Users/jan-erikhuhne/Documents/NISE/NeuroInspiredSystemEngineering-/data/nine.txt"
+        self.save_file = "C:/Users/m_keh/NeuroInspiredSystemEngineering-/data/nine.txt"
         self.root = tk.Tk()
         self.root.geometry("920x650")
         self.root.resizable(False, False)
@@ -73,7 +73,7 @@ class Client:
         #detector
         self.detector = HandDetector(maxHands = 2, detectionCon = 0.8) 
 
-        self.clasifier = pickle.load(open("/Users/jan-erikhuhne/Documents/NISE/NeuroInspiredSystemEngineering-/models/dt_classifier.pickle", "rb"))
+        self.clasifier = pickle.load(open("C:/Users/m_keh/NeuroInspiredSystemEngineering-/models/dt_classifier.pickle", "rb"))
         # start app 
         self.root.mainloop()
 
@@ -167,7 +167,7 @@ class Client:
                 #return self.detectHandMovement(EU)
         return "Empty"
     def calculateDistances(self, handPoints):
-        eu = [0.0] * 11
+        eu = [0.0] * 15
         # thumb to index
         eu[0] = math.sqrt((handPoints[4,0] - handPoints[8,0])**2 + (handPoints[4,1] - handPoints[8,1])**2 + (handPoints[4,2] - handPoints[8,2])**2)
         # thumb to middle
@@ -180,11 +180,25 @@ class Client:
         eu[4] = math.sqrt((handPoints[16,0] - handPoints[20,0])**2 + (handPoints[16,1] - handPoints[20,1])**2 + (handPoints[16,2] - handPoints[20,2])**2)
         # palm to thumb
         eu[5] = math.sqrt((handPoints[0,0] - handPoints[4,0])**2 + (handPoints[0,1] - handPoints[4,1])**2 + (handPoints[0,2] - handPoints[4,2])**2)
+        #palm to index
         eu[6] = math.sqrt((handPoints[0,0] - handPoints[8,0])**2 + (handPoints[0,1] - handPoints[8,1])**2 + (handPoints[0,2] - handPoints[8,2])**2)
+        #palm to middle
         eu[7] = math.sqrt((handPoints[0,0] - handPoints[12,0])**2 + (handPoints[0,1] - handPoints[12,1])**2 + (handPoints[0,2] - handPoints[12,2])**2)
+        #palm to ring
         eu[8] = math.sqrt((handPoints[0,0] - handPoints[16,0])**2 + (handPoints[0,1] - handPoints[16,1])**2 + (handPoints[0,2] - handPoints[16,2])**2)
+        #palm to pinky
         eu[9] = math.sqrt((handPoints[0,0] - handPoints[20,0])**2 + (handPoints[0,1] - handPoints[20,1])**2 + (handPoints[0,2] - handPoints[20,2])**2)
+        # thumb to below pinky
         eu[10] = math.sqrt((handPoints[4,0] - handPoints[17,0])**2 + (handPoints[4,1] - handPoints[17,1])**2 + (handPoints[4,2] - handPoints[17,2])**2)
+        #pinky to middle
+        eu[11] = math.sqrt((handPoints[12,0] - handPoints[20,0])**2 + (handPoints[12,1] - handPoints[20,1])**2 + (handPoints[12,2] - handPoints[20,2])**2)#add interfinger distance
+        #pinky to index
+        eu[12] = math.sqrt((handPoints[8,0] - handPoints[20,0])**2 + (handPoints[8,1] - handPoints[20,1])**2 + (handPoints[8,2] - handPoints[20,2])**2)#add interfinger distance
+        #index to ring
+        eu[13] = math.sqrt((handPoints[8,0] - handPoints[16,0])**2 + (handPoints[8,1] - handPoints[16,1])**2 + (handPoints[8,2] - handPoints[16,2])**2)#add interfinger distance
+        #index to middle
+        eu[14] = math.sqrt((handPoints[8,0] - handPoints[12,0])**2 + (handPoints[8,1] - handPoints[12,1])**2 + (handPoints[8,2] - handPoints[12,2])**2)#add interfinger distance
+
         return eu
     
 
