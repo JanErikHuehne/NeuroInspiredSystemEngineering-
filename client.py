@@ -281,9 +281,12 @@ class Client:
             time.sleep(0.3)
 
     def udp_send(self, word_to_send):
-        bytesToSend= str.encode(word_to_send)
-        self.udp_client_socket.sendto(bytesToSend, (self.server_ip.get(), int(self.server_port.get())))
-        print("Word send")
+        if word_to_send:
+            bytesToSend= str.encode(word_to_send)
+            self.udp_client_socket.sendto(bytesToSend, (self.server_ip.get(), int(self.server_port.get())))
+            print("Word send")
+        else:
+            print("Nothing to send, empty cache")
 
     def stop_button_pressed(self):
         self.stop_button_event.set()
