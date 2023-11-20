@@ -12,10 +12,17 @@ import copy
 from sklearn import tree
 import pickle
 from pathlib import Path
+import time
+
 
 class Client:
 
     def __init__(self,):
+        # Variables for validation
+        self.start_time = 0
+        self.counterCollected = 0
+        self.end_time = 0
+
         # Set up main window
         self.save = True 
         self.save_file = Path("./data2/nine.txt").absolute()
@@ -124,6 +131,7 @@ class Client:
 
         self.collect_char_thread = Thread(target=self.collect_char)
         self.collect_char_thread.start()
+        self.start_time = time.time()
 
 
     def media_pipe_detection(self,):
@@ -265,6 +273,15 @@ class Client:
             self.collect_next_char_event.wait()
             # Do something with same frame, pass it to mediapipe in this thread
             print("collected")
+            self.counterCollected += 1
+            if self.counterCollected == 10:
+                self.end_time = time.time()
+                print(f"10 signs executed in {self.end_time - self.start_time:.2f} seconds")
+                self.counterCollected = 0
+                self.start_time = 0
+                self.end_time = 0
+                # Set the stop button event to stop the execution
+                self.stop_button_event.set()
            
             collected_char = self.media_pipe_detection()
             print(collected_char)
