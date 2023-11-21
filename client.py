@@ -26,16 +26,20 @@ class Client:
         # Set up window widgets
         self.camera = tk.Label(self.root)
         self.camera.grid(row=0, column=2, padx=(50, 0), pady=(50,0), rowspan=100, columnspan=200)
-        self.address_label = tk.Label(self.root, text="Server IP Adress ", bd=0, bg="white").grid(row=0, column=0, pady=(50,0))
-        self.port_label = tk.Label(self.root, text="Server Port ", bd=0, bg="white").grid(row=1, column=0) 
+        self.address_label = tk.Label(self.root, text="Server IP Address ", bd=0, bg="white").grid(row=0, column=0, pady=(50,0))
+        self.address_label2 = tk.Label(self.root, text="Microcontroller IP Address ", bd=0, bg="white").grid(row=1, column=0)
+        self.port_label = tk.Label(self.root, text="Server Port (common) ", bd=0, bg="white").grid(row=2, column=0) 
         self.server_ip = tk.StringVar()
+        self.esp_ip = tk.StringVar()
         self.server_port = tk.StringVar()
         self.current_word_text = ""
         # Ip and port entry fields 
         self.server_ip_entry = tk.Entry(self.root, textvariable=self.server_ip, )
         self.server_ip_entry.grid(row=0, column=1, pady=(50,0))
+        self.esp_ip_entry = tk.Entry(self.root, textvariable=self.esp_ip)
+        self.esp_ip_entry.grid(row=1, column=1)
         self.server_port_entry = tk.Entry(self.root, textvariable=self.server_port)
-        self.server_port_entry.grid(row=1, column=1)
+        self.server_port_entry.grid(row=2, column=1)
         # Start button 
         self.start_button = tk.Button(self.root, text ="Start",borderwidth=0, command = self.start_button_pressed, height= 3, width=30)
         self.start_button.grid(row=3, column=0, columnspan = 2, pady=(230, 0))
@@ -79,7 +83,15 @@ class Client:
         self.root.mainloop()
 
         
-        
+    def esp_udp_connect(self, char_to_send):
+        bytesToSend= str.encode(str(char_to_send))
+        print(self.esp_ip.get(), self.server_port.get())
+        try:
+            self.udp_client_socket.sendto(bytesToSend, (self.esp_ip.get(), int(self.server_port.get())))
+            print("Character send")
+        except OSError: 
+            print("Could not send character to host.")
+       
 
     def add_values(self):
         variable = self.var
@@ -87,6 +99,12 @@ class Client:
             if self.stop_button_event.is_set():
                 return 
             time.sleep(0.008)
+            if x % 10 == 0 and x > 60:
+                current_sign = self.media_pipe_detection()
+                if current_sign != "Empty":
+                    self.esp_udp_connect_thread = Thread(target=self.esp_udp_connect, args=[current_sign])
+                    self.esp_udp_connect_thread.start()
+                    #self.esp_udp_connect(char_to_send=str(current_sign))
             variable.set(x)
         self.collect_next_char_event.set()
         self.next_char_collect_event.wait()
@@ -101,6 +119,7 @@ class Client:
         print(self.server_ip.get())
         print(self.server_port.get())
         self.server_ip_entry['state'] = tk.DISABLED
+        self.esp_ip_entry['state'] = tk.DISABLED
         self.server_port_entry['state'] = tk.DISABLED
         self.stop_button_event.clear()
         self.word_var.set("")
@@ -293,6 +312,7 @@ class Client:
         self.start_button['state'] = tk.NORMAL
         self.stop_button['state'] = tk.DISABLED
         self.server_ip_entry['state'] = tk.NORMAL
+        self.esp_ip_entry['state'] = tk.NORMAL
         self.server_port_entry['state'] = tk.NORMAL
         self.root.after_cancel(self.after_id)
         self.camera.grid_forget()
