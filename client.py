@@ -25,7 +25,7 @@ class Client:
 
         # Set up main window
         self.save = True 
-        self.save_file = Path("./data2/nine.txt").absolute()
+        self.save_file = Path("./data3/RnR.txt").absolute()
         self.root = tk.Tk()
         self.root.geometry("920x650")
         self.root.resizable(False, False)
@@ -81,7 +81,7 @@ class Client:
         #detector
         self.detector = HandDetector(maxHands = 2, detectionCon = 0.8) 
 
-        self.clasifier = pickle.load(open("./models/dt_classifier.pickle", "rb"))
+        self.clasifier = pickle.load(open("./models/dt_classifier2.pickle", "rb"))
         # start app 
         self.root.mainloop()
 
@@ -90,10 +90,10 @@ class Client:
 
     def add_values(self):
         variable = self.var
-        for x in range(100):
+        for x in range(20):
             if self.stop_button_event.is_set():
                 return 
-            time.sleep(0.008)
+            time.sleep(0.0008)
             variable.set(x)
         self.collect_next_char_event.set()
         self.next_char_collect_event.wait()
