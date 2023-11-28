@@ -29,6 +29,11 @@ class Client:
         self.address_label = tk.Label(self.root, text="Server IP Address ", bd=0, bg="white").grid(row=0, column=0, pady=(50,0))
         self.address_label2 = tk.Label(self.root, text="Microcontroller IP Address ", bd=0, bg="white").grid(row=1, column=0)
         self.port_label = tk.Label(self.root, text="Server Port (common) ", bd=0, bg="white").grid(row=2, column=0) 
+        v = tk.IntVar()
+        self.radio_normal = tk.Radiobutton(self.root, text="Normal mode", variable=v, value=1, bg="white")
+        self.radio_normal.grid(row=3, column=0)
+        self.radio_vibration = tk.Radiobutton(self.root, text = "Vibration mode", variable=v, value=2, bg="white")
+        self.radio_vibration.grid(row=3, column=1, )
         self.server_ip = tk.StringVar()
         self.esp_ip = tk.StringVar()
         self.server_port = tk.StringVar()
@@ -98,8 +103,8 @@ class Client:
         for x in range(100):
             if self.stop_button_event.is_set():
                 return 
-            time.sleep(0.008)
-            if x % 10 == 0 and x > 60:
+            time.sleep(0.012)
+            if x == 50:
                 current_sign = self.media_pipe_detection()
                 if current_sign != "Empty":
                     self.esp_udp_connect_thread = Thread(target=self.esp_udp_connect, args=[current_sign])
@@ -121,6 +126,8 @@ class Client:
         self.server_ip_entry['state'] = tk.DISABLED
         self.esp_ip_entry['state'] = tk.DISABLED
         self.server_port_entry['state'] = tk.DISABLED
+        self.radio_normal['state'] = tk.DISABLED
+        self.radio_vibration['state'] = tk.DISABLED
         self.stop_button_event.clear()
         self.word_var.set("")
         self.counter = 0 
@@ -314,6 +321,8 @@ class Client:
         self.server_ip_entry['state'] = tk.NORMAL
         self.esp_ip_entry['state'] = tk.NORMAL
         self.server_port_entry['state'] = tk.NORMAL
+        self.radio_normal['state'] = tk.NORMAL
+        self.radio_vibration['state'] = tk.NORMAL
         self.root.after_cancel(self.after_id)
         self.camera.grid_forget()
         self.char.grid_forget()
