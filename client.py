@@ -83,7 +83,7 @@ class Client:
         #detector
         self.detector = HandDetector(maxHands = 2, detectionCon = 0.8) 
 
-        self.clasifier = pickle.load(open("./models/dt_classifier.pickle", "rb"))
+        self.clasifier = pickle.load(open("./models/dt_classifier2.pickle", "rb"))
         # start app 
         self.root.mainloop()
 
