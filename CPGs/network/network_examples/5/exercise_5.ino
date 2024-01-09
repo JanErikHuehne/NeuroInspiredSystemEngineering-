@@ -182,18 +182,45 @@ void setup() {
 }
 
 
+void initializeNeuron(struct MatsuokaNeuron *neuron, int numberNeurons) {
+        neuron->a = (double *)malloc(numberNeurons * sizeof(double));
+        for (int i = 0; i < numberNeurons; i++) {
+            neuron->a[i] = 0;
+        }
+        neuron->n = numberNeurons;
+        neuron->T = 12;
+        neuron->b = 2.5;
+        neuron->x = 0.0;
+        neuron->id = 0;
+        neuron->x_prime = 0.0;
+        neuron->neuronDynamics = matsuoka_neuron_dynamics;
+        neuron->neuronOutput = matsuoka_neuron_output;
+        neuron->adaptation = matsouka_adaptation;
+        neuron->ode_solver = test_ode_solver;
+    }
+
 void loop() {
+
+// Fill the remaining elements with desired values
+// ...
     static bool initialized = false;
     struct MatsuokaNeuron myNeuron;
+    
     struct MatsuokaNeuron myNeuron2;
     struct MatsuokaNeuron myNeuron3;
     struct MatsuokaNeuron myNeuron4;
+    struct MatsuokaNeuron myNeuron5;
+     
     struct MatsuokaNetwork myNetwork;
 
     if (!initialized) {
         // Initial delay of 3 seconds
     Serial.println(("INITALIZING"));
+
     int numberNeurons = 4;
+    initializeNeuron(&myNeuron, numberNeurons);
+    initializeNeuron(&myNeuron2, numberNeurons);
+    initializeNeuron(&myNeuron3, numberNeurons);
 
     myNeuron.a = (double *)malloc(numberNeurons * sizeof(double));
     myNeuron.a[0] = 0.0;
