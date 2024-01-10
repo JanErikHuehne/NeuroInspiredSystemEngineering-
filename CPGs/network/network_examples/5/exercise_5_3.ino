@@ -174,61 +174,6 @@ void test_ode_solver(struct MatsuokaNeuron *neuron, double dt, double input, dou
     neuron->x_prime += (l1 + 2*l2 + 2*l3 + l4) * (dt/6);
 }
 
-void test_ode_solver_RK2(struct MatsuokaNeuron *neuron, double dt, double input, double *y, int numberNeurons) {
-    bool debug = false; 
-    if (debug) {
-        printf("ODE SOLVER CALLED FOR NEURON %d \n", neuron->id);
-    }
-
-    double k1, k2;
-    double l1, l2;
-   
-    k1 = neuron->neuronDynamics(input, neuron->x_prime, neuron->x, y, neuron->a, neuron->b, numberNeurons, neuron->id);
-    l1 = neuron->adaptation(neuron->T, y[neuron->id], neuron->x_prime);
-
-    if (debug) {
-        printf("k1: %lf\n", k1);
-        printf("l1: %lf\n", l1);
-    }
-
-    double x_half, x_prime_half;
-    x_half = neuron->x + 0.5 * dt * k1;
-    x_prime_half = neuron->x_prime + 0.5 * dt * l1;
-    y[neuron->id] = neuron->neuronOutput(x_half);
-
-    k2 = neuron->neuronDynamics(input, x_prime_half, x_half, y, neuron->a, neuron->b, numberNeurons, neuron->id);
-    l2 = neuron->adaptation(neuron->T, y[neuron->id], x_prime_half);
-
-    if (debug) {
-        printf("k2: %lf\n", k2);
-        printf("l2: %lf\n", l2);
-    }
-
-    neuron->x += dt * k2;
-    neuron->x_prime += dt * l2;
-}
-
-void test_ode_solver_euler(struct MatsuokaNeuron *neuron, double dt, double input, double *y, int numberNeurons) {
-    bool debug = false; 
-    if (debug) {
-        printf("ODE SOLVER CALLED FOR NEURON %d \n", neuron->id);
-    }
-
-    double k1, l1;
-
-    k1 = neuron->neuronDynamics(input, neuron->x_prime, neuron->x, y, neuron->a, neuron->b, numberNeurons, neuron->id);
-    l1 = neuron->adaptation(neuron->T, y[neuron->id], neuron->x_prime);
-
-    if (debug) {
-        printf("k1: %lf\n", k1);
-        printf("l1: %lf\n", l1);
-    }
-
-    neuron->x += dt * k1;
-    neuron->x_prime += dt * l1;
-}
-
-
 void setup() {
     Serial.begin(9600);  // Initialize serial communication with baud rate 9600
 
@@ -275,60 +220,75 @@ void loop() {
         // Initial delay of 3 seconds
     Serial.println(("INITALIZING"));
 
-    int numberNeurons = 10;
+    int numberNeurons = 6;
     initializeNeuron(&myNeuron, numberNeurons);
     initializeNeuron(&myNeuron2, numberNeurons);
     initializeNeuron(&myNeuron3, numberNeurons);
     initializeNeuron(&myNeuron4, numberNeurons);
     initializeNeuron(&myNeuron5, numberNeurons);
     initializeNeuron(&myNeuron6, numberNeurons);
-    initializeNeuron(&myNeuron7, numberNeurons);
-    initializeNeuron(&myNeuron8, numberNeurons);
-    initializeNeuron(&myNeuron9, numberNeurons);
-    initializeNeuron(&myNeuron10, numberNeurons);
+    //initializeNeuron(&myNeuron7, numberNeurons);
+    //initializeNeuron(&myNeuron8, numberNeurons);
+    //initializeNeuron(&myNeuron9, numberNeurons);
+    //initializeNeuron(&myNeuron10, numberNeurons);
 
     // First Neuron 
-    myNeuron.a[4] = 2.5;
-    myNeuron.a[5] = 2.5;
+
+    myNeuron.a[3] = 1.5;
+    myNeuron.a[4] = 1.5;
+    myNeuron.a[5] = 1.5;
 
     // Second Neuron 
-    myNeuron2.a[0] = 2.5;
-    myNeuron2.a[6] = 2.5;
-
+   
+    myNeuron2.a[0] = 1.5;
+    myNeuron2.a[5] = 1.5;
+    myNeuron2.a[4] = 1.5;
+    
     // Third Neuron 
-    myNeuron3.a[1] = 2.5;
-    myNeuron3.a[7] = 2.5;
-
+    myNeuron3.a[0] = 1.5;
+    myNeuron3.a[1] = 1.5;
+    myNeuron3.a[5] = 1.5;
+    
+    
+    
     // Fourth Neuron 
-    myNeuron4.a[2] = 2.5;
-    myNeuron4.a[8] = 2.5;
+    
+    myNeuron4.a[2] = 1.5;
+    myNeuron4.a[1] = 1.5;
+    myNeuron4.a[0] = 1.5;
 
     // Fifth Neuron
-    myNeuron5.a[3] = 2.5;
-    myNeuron5.a[9] = 2.5;
+    myNeuron5.a[3] = 1.5;
+    myNeuron5.a[2] = 1.5;
+    myNeuron5.a[1] = 1.5;
+    
 
     // Sixth Neuron 
-    myNeuron6.a[0] = 2.5;
-    myNeuron6.a[6] = 2.5;
-    
-    // Seventh Neuron   
-    myNeuron7.a[1] = 2.5;
-    myNeuron7.a[7] = 2.5;
+    myNeuron6.a[2] = 1.5;
+    myNeuron6.a[3] = 1.5;
+    myNeuron6.a[4] = 1.5;
    
+    /*
+    // Seventh Neuron   
+    myNeuron7.a[4] = 2.5;
+    myNeuron7.a[5] = 2.5;
+    myNeuron7.a[8] = 2.5;
+    myNeuron7.a[9] = 2.5;
+
     // Eighth Neuron    
-    myNeuron8.a[2] = 2.5;
+    myNeuron8.a[4] = 2.5;
+    myNeuron8.a[6] = 2.5;
     myNeuron8.a[8] = 2.5;
     
-    
     // Ninth Neuron
-    myNeuron9.a[3] = 2.5;
+    myNeuron9.a[7] = 2.5;
     myNeuron9.a[9] = 2.5;
     
     // Tenth Neuron
-    myNeuron10.a[4] = 2.5;
-    myNeuron10.a[5] = 2.5;
-
-    myNetwork.neuronNumber = neuronNumber;
+    myNeuron10.a[6] = 2.5;
+    myNeuron10.a[7] = 2.5;
+    */
+    myNetwork.neuronNumber = numberNeurons;
 
     myNetwork.neurons = (struct MatsuokaNeuron *)malloc(myNetwork.neuronNumber * sizeof(struct MatsuokaNeuron));
 
@@ -345,10 +305,10 @@ void loop() {
     myNetwork.neurons[3] = myNeuron4;
     myNetwork.neurons[4] = myNeuron5;
     myNetwork.neurons[5] = myNeuron6;
-    myNetwork.neurons[6] = myNeuron7;
-    myNetwork.neurons[7] = myNeuron8;
-    myNetwork.neurons[8] = myNeuron9;
-    myNetwork.neurons[9] = myNeuron10;
+    //myNetwork.neurons[6] = myNeuron7;
+    //myNetwork.neurons[7] = myNeuron8;
+    //myNetwork.neurons[8] = myNeuron9;
+    //myNetwork.neurons[9] = myNeuron10;
 
     myNetwork.y = (double *)malloc(myNetwork.neuronNumber * sizeof(double));
 
@@ -356,6 +316,8 @@ void loop() {
         delay(3000);
         initialized = true;
     }    
+
+    unsigned long startTime = millis(); // Get the current time in milliseconds
 
     for (int i = 0; i < 500; i++) {
         myNetwork.ode_solver(&myNetwork, 0.1, 1);
@@ -365,10 +327,17 @@ void loop() {
             Serial.print("ID");
             Serial.print(currentNeuron->id);
             Serial.print(": ");
-            Serial.print(myNetwork.y[j]);
+            Serial.print(myNetwork.y[j] + j + 0.1);
             Serial.print(" ");
         }
         Serial.println();
         delay(100);
     }
+
+    unsigned long endTime = millis(); // Get the current time in milliseconds
+    unsigned long elapsedTime = endTime - startTime; // Calculate the elapsed time in milliseconds
+
+    Serial.print("Elapsed Time: ");
+    Serial.print(elapsedTime);
+    Serial.println(" ms");
 }
