@@ -1,0 +1,3 @@
+RK4 : 11s for 500 steps
+RK2: 5s for 500 steps
+Euler: 2s for 500 steps 
