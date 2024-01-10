@@ -174,6 +174,61 @@ void test_ode_solver(struct MatsuokaNeuron *neuron, double dt, double input, dou
     neuron->x_prime += (l1 + 2*l2 + 2*l3 + l4) * (dt/6);
 }
 
+void test_ode_solver_RK2(struct MatsuokaNeuron *neuron, double dt, double input, double *y, int numberNeurons) {
+    bool debug = false; 
+    if (debug) {
+        printf("ODE SOLVER CALLED FOR NEURON %d \n", neuron->id);
+    }
+
+    double k1, k2;
+    double l1, l2;
+   
+    k1 = neuron->neuronDynamics(input, neuron->x_prime, neuron->x, y, neuron->a, neuron->b, numberNeurons, neuron->id);
+    l1 = neuron->adaptation(neuron->T, y[neuron->id], neuron->x_prime);
+
+    if (debug) {
+        printf("k1: %lf\n", k1);
+        printf("l1: %lf\n", l1);
+    }
+
+    double x_half, x_prime_half;
+    x_half = neuron->x + 0.5 * dt * k1;
+    x_prime_half = neuron->x_prime + 0.5 * dt * l1;
+    y[neuron->id] = neuron->neuronOutput(x_half);
+
+    k2 = neuron->neuronDynamics(input, x_prime_half, x_half, y, neuron->a, neuron->b, numberNeurons, neuron->id);
+    l2 = neuron->adaptation(neuron->T, y[neuron->id], x_prime_half);
+
+    if (debug) {
+        printf("k2: %lf\n", k2);
+        printf("l2: %lf\n", l2);
+    }
+
+    neuron->x += dt * k2;
+    neuron->x_prime += dt * l2;
+}
+
+void test_ode_solver_euler(struct MatsuokaNeuron *neuron, double dt, double input, double *y, int numberNeurons) {
+    bool debug = false; 
+    if (debug) {
+        printf("ODE SOLVER CALLED FOR NEURON %d \n", neuron->id);
+    }
+
+    double k1, l1;
+
+    k1 = neuron->neuronDynamics(input, neuron->x_prime, neuron->x, y, neuron->a, neuron->b, numberNeurons, neuron->id);
+    l1 = neuron->adaptation(neuron->T, y[neuron->id], neuron->x_prime);
+
+    if (debug) {
+        printf("k1: %lf\n", k1);
+        printf("l1: %lf\n", l1);
+    }
+
+    neuron->x += dt * k1;
+    neuron->x_prime += dt * l1;
+}
+
+
 void setup() {
     Serial.begin(9600);  // Initialize serial communication with baud rate 9600
 
