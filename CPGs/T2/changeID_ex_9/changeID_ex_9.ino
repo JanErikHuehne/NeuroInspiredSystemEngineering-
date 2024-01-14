@@ -37,7 +37,8 @@
 #define mean                            500.0
 #define amplitude                       300.0
 #define frequency                       0.5
-    
+#define DISCRIPTION_LENGTH     15
+#define NOMBER_RS_NEURONS     1
 
 // Create PortHandler instance
 dynamixel::PortHandler *portHandler;
@@ -53,9 +54,6 @@ uint8_t dxl_error = 0;                          // Dynamixel error
 int16_t dxl_present_position = 0;               // Present position
 
 uint8_t dxl_new_id = DXL_NEW_ID; 
-
-#define DISCRIPTION_LENGTH     15
-#define NOMBER_RS_NEURONS     1
 unsigned int mydelay = 10; // ms
 
 /******************/ 
@@ -212,8 +210,6 @@ String a;
     return;
   }
 
-    
-
 
   // Change ID
   for(int id=0;id<=253;id++)
@@ -236,33 +232,34 @@ String a;
 
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  /* Read my program running time in milliseconds */
+  time = millis();
+
+  //NEURON PART
+  /* After 5 seconds, inject a current in the first neuron for a duration of 0.01 second*/
+  if((time>5000)&&(time<5010))
+  rs_neuron[0].inj_cur = 1;
+  else
+  rs_neuron[0].inj_cur = 0;
+
+  /* Update the neurons output*/
+  update_locomotion_network();
+  
   packetHandler->read1ByteTxRx(portHandler, dxl_new_id, MOVING, (uint8_t*)&isMoving, &dxl_error);
-   for (int j = 0; j<1000; j++) {
+
   if( isMoving == 0 ){ //if Dynamixel is stopped
+    // set goal position
+    goalPosition = (rs_neuron[0].V *50)+250
+
     //Send instruction packet to move for goalPosition
     dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_GOAL_POSITION, goalPosition, &dxl_error);
-    //toggle the position if goalPosition is 1000, set to 0, if 0, set to 1000
-//    if(goalPosition == 700)
-//      goalPosition = 0;
-//    else
-//      goalPosition = 700;
-  float pai = 3.1415;
- // float time = (millis()/1000);
- 
- //goalPosition = mean + amplitude * std::sin(2 * pai * frequency * 0.002*j);
-    goalPosition = (rs_neuron[0].V *50)+250
+
     packetHandler->read2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
-     Serial.print("ID : ");
+    Serial.print("ID : ");
     Serial.print(dxl_new_id);
     Serial.print("\t Present Position : ");
     Serial.print(dxl_present_position);
     Serial.print("\n");
   }
-  //goalPosition = mean + amplitude * std::sin(2 * pai * frequency * time);
-  }
    
-  
-  
-
 }
