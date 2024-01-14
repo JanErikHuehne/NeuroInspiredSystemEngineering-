@@ -54,7 +54,7 @@ uint8_t dxl_error = 0;                          // Dynamixel error
 int16_t dxl_present_position = 0;               // Present position
 
 uint8_t dxl_new_id = DXL_NEW_ID; 
-unsigned int mydelay = 10; // ms
+unsigned int mydelay = 1000; // ms
 
 /******************/ 
 //struct RSneuron 
@@ -95,14 +95,14 @@ struct Pattern{
    | /    \/    \/    \
    ------------------------> 
 */
-Pattern OSCILLATORY={4.6,1.5,0.1,1};
+Pattern OSCILLATORY={1.0,1.5,0.1,1};
 
 /******************/ 
 inline double fun_v ( double V , double q , double Sf , double inj , double tm , double Af )
 { return  (double)(-1/tm)*( V-Af*tanh(Sf/Af*V)+q-inj) ; } 
 /******************/ 
 inline double  fun_q ( double V , double q , double ts , double Es , double Ss )
-{ return (double)(1/ts)(-q+Ss*(V-Es)); } 
+{ return (double)(1/ts) * (-q+Ss*(V-Es)); } 
 /******************/ 
 void update_RS_neuron(struct RSneuron* rs_n)
 {
@@ -111,7 +111,8 @@ int n = 20;
 //double xf = t;
 double h; 
 //h = (xf-x0)/(double)n;
-h= ((double)mydelay/1000)/n;
+// h= ((double)mydelay/1000)/n;
+h = 0.01;
 double xa[20],ya[20],yb[20]; 
 double k1,k2,k3,k4,k, l1,l2,l3,l4,l;  
 //xa[0] = x0;
@@ -174,7 +175,7 @@ String a;
   if(Serial.available())
   {
     a= Serial.readString();// read the incoming data as string
-    Serial.println(a); 
+    //Serial.println(a); 
     dxl_new_id = a.toInt();
     delay(2000);
   }
@@ -233,33 +234,51 @@ String a;
 
 void loop() {
   /* Read my program running time in milliseconds */
-  time = millis();
-
+  unsigned long mytime = millis();
+  
   //NEURON PART
-  /* After 5 seconds, inject a current in the first neuron for a duration of 0.01 second*/
-  if((time>5000)&&(time<5010))
-  rs_neuron[0].inj_cur = 1;
+  /* After 25 seconds, inject a current in the first neuron for a duration of 0.1 second*/
+  if((mytime>25000)&&(mytime<25100)){
+    Serial.print("INJECTING CURRENT");
+    Serial.print("\n");
+     rs_neuron[0].inj_cur = 1;
+  }
+  
+   
   else
-  rs_neuron[0].inj_cur = 0;
+  {
+    rs_neuron[0].inj_cur = 0;
+  }
+  
 
   /* Update the neurons output*/
-  update_locomotion_network();
+
   
   packetHandler->read1ByteTxRx(portHandler, dxl_new_id, MOVING, (uint8_t*)&isMoving, &dxl_error);
-
+  
+  //delay(mydelay);
   if( isMoving == 0 ){ //if Dynamixel is stopped
     // set goal position
-    goalPosition = (rs_neuron[0].V *50)+250
-
+    update_locomotion_network();
+    goalPosition = (rs_neuron[0].V *30)+512;
+    
+    //Serial.print(mytime);
+    //Serial.print(" ");
+   // Serial.print(rs_neuron[0].V);
+    //Serial.print(" ");
+   // Serial.print(rs_neuron[0].inj_cur);
+   // Serial.print("\n");
     //Send instruction packet to move for goalPosition
     dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_GOAL_POSITION, goalPosition, &dxl_error);
-
+  
     packetHandler->read2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
     Serial.print("ID : ");
     Serial.print(dxl_new_id);
     Serial.print("\t Present Position : ");
     Serial.print(dxl_present_position);
     Serial.print("\n");
+   
   }
+
    
 }
