@@ -1,10 +1,6 @@
 #include <actuator.h>
 #include <Dynamixel2Arduino.h>
-
-
-
 #include <DynamixelSDK.h>
-//#include <iostream>
 #include <cmath>
 
 #define ADDR_AX_ID           3                 
@@ -20,11 +16,9 @@
 // Protocol version
 #define PROTOCOL_VERSION                1.0                 // See which protocol version is used in the Dynamixel
 
-
 // Default setting
 #define DXL_ID                          1                   // Dynamixel ID: 1
 #define DXL_NEW_ID                      1                   // Dynamixel ID: 2
-
 
 #define BAUDRATE                        1000000
 #define DEVICENAME                      "1"                 //DEVICENAME "1" -> Serial1(OpenCM9.04 DXL TTL Ports)
@@ -62,8 +56,10 @@ uint8_t id = DXL_ID;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+
   while(!Serial.available());
-String a;
+
+  String a;
   if(Serial.available())
   {
     a= Serial.readString();// read the incoming data as string
@@ -104,63 +100,56 @@ String a;
     return;
   }
 
-    
-
-
-//  // Change ID
-//  for(int id=0;id<=253;id++)
-//  {
-//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
-//  delay(10);
-//  }
-//  //settorque
-//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
-// // delay(100);
-//  int new_torque_max = 1023;
-//  int new_torque = 512;
-//  // or  new_torque 1023, or 512 
-//  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
-//  //delay(10);
-//  int new_speed = 512;
-//  
-//  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MOVING_SPEED , new_speed, &dxl_error);
+  // // Change ID
+  // for(int id=0;id<=253;id++)
+  // {
+  //   dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
+  //   delay(10);
+  // }
+  // //settorque
+  // dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
+  // // delay(100);
+  // int new_torque_max = 1023;
+  // int new_torque = 512;
+  // // or  new_torque 1023, or 512 
+  // dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
+  // //delay(10);
+  // int new_speed = 512;
+ 
+  // dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MOVING_SPEED , new_speed, &dxl_error);
   
   int CW_limit = 75;
   int CCW_limit = 948;
   
   dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CW_ANGLE_LIMIT, CW_limit, &dxl_error);
   dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CCW_ANGLE_LIMIT, CCW_limit, &dxl_error);
-
 }
 
 
 void loop() {
   // put your main code here, to run repeatedly:
   packetHandler->read1ByteTxRx(portHandler, dxl_new_id, MOVING, (uint8_t*)&isMoving, &dxl_error);
-   for (int j = 0; j<1000; j++) {
-  if( isMoving == 0 ){ //if Dynamixel is stopped
-    //Send instruction packet to move for goalPosition
-    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_GOAL_POSITION, goalPosition, &dxl_error);
-    //toggle the position if goalPosition is 1000, set to 0, if 0, set to 1000
-//    if(goalPosition == 700)
-//      goalPosition = 0;
-//    else
-//      goalPosition = 700;
-  float pai = 3.1415;
- // float time = (millis()/1000);
- 
-    goalPosition = mean + amplitude * std::sin(2 * pai * frequency * 0.002*j);
-    packetHandler->read2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
-     Serial.print("ID : ");
-    Serial.print(dxl_new_id);
-    Serial.print("\t Present Position : ");
-    Serial.print(dxl_present_position);
-    Serial.print("\n");
-  }
+
+  for (int j = 0; j<1000; j++) {
+    if(isMoving == 0){ //if Dynamixel is stopped
+      //Send instruction packet to move for goalPosition
+      dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_GOAL_POSITION, goalPosition, &dxl_error);
+      //toggle the position if goalPosition is 1000, set to 0, if 0, set to 1000
+      //    if(goalPosition == 700)
+      //      goalPosition = 0;
+      //    else
+      //      goalPosition = 700;
+      float pai = 3.1415;
+      // float time = (millis()/1000);
+  
+      goalPosition = mean + amplitude * std::sin(2 * pai * frequency * 0.002*j);
+      packetHandler->read2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
+      Serial.print("ID : ");
+      Serial.print(dxl_new_id);
+      Serial.print("\t Present Position : ");
+      Serial.print(dxl_present_position);
+      Serial.print("\n");
+    }
   //goalPosition = mean + amplitude * std::sin(2 * pai * frequency * time);
   }
-   
-  
-  
-
 }
