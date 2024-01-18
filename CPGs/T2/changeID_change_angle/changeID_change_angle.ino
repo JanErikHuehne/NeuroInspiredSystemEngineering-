@@ -1,6 +1,8 @@
 #include <actuator.h>
 #include <Dynamixel2Arduino.h>
 
+
+
 #include <DynamixelSDK.h>
 //#include <iostream>
 #include <cmath>
@@ -11,6 +13,8 @@
 #define ADDR_AX_GOAL_POSITION           30
 #define ADDR_AX_PRESENT_POSITION        36
 #define ADDR_AX_MOVING_SPEED            32
+#define ADDR_AX_CW_ANGLE_LIMIT          6
+#define ADDR_AX_CW_ANGLE_LIMIT          8
 #define MOVING                          46
 
 // Protocol version
@@ -53,122 +57,9 @@ uint8_t dxl_error = 0;                          // Dynamixel error
 int16_t dxl_present_position = 0;               // Present position
 
 uint8_t dxl_new_id = DXL_NEW_ID; 
-
-#define DISCRIPTION_LENGTH     15
-#define NOMBER_RS_NEURONS     1
-unsigned int mydelay = 10; // ms
-
-/******************/ 
-//struct RSneuron 
-/******************/ 
-struct RSneuron { 
-   char discription[DISCRIPTION_LENGTH]; // name 
-   double tao_m   = 0.1;  
-   double tao_s   = 20*tao_m; 
-   double Af      = 5; 
-   double Es      = 0; 
-   double sigma_s = 0; 
-   double sigma_f = 0; 
-   double V_0     = 0;
-   double q_0     = 0;
-   double V       = V_0;
-   double q       = q_0; 
-   double inj_cur = 0; 
-   double inj_cur_MultiplicationFactor = 1; 
-   
-} rs_neuron[NOMBER_RS_NEURONS]; 
-
-//struct Pattern 
-/******************/ 
-struct Pattern{
-  double sigma_s;
-  double sigma_f;
-  double tao_m;
-  double InjCurrentMultiplicationFactor;
-  };
-/******************/ 
-
-/*
-  OSCILLATORY
-   ^
-   |     
-   |   /\    /\    /\
-   |  /  \  /  \  /  \
-   | /    \/    \/    \
-   ------------------------> 
-*/
-Pattern OSCILLATORY={4.6,1.5,0.1,1};
-
-/******************/ 
-inline double fun_v ( double V , double q , double Sf , double inj , double tm , double Af )
-{ return  (double)(-1/tm)*( V-Af*tanh(Sf/Af*V)+q-inj) ; } 
-/******************/ 
-inline double  fun_q ( double V , double q , double ts , double Es , double Ss )
-{ return (double)(1/ts)(-q+Ss*(V-Es)); } 
-/******************/ 
-void update_RS_neuron(struct RSneuron* rs_n)
-{
-int n = 20; 
-//double x0 = t-ts;
-//double xf = t;
-double h; 
-//h = (xf-x0)/(double)n;
-h= ((double)mydelay/1000)/n;
-double xa[20],ya[20],yb[20]; 
-double k1,k2,k3,k4,k, l1,l2,l3,l4,l;  
-//xa[0] = x0;
-ya[0] = rs_n->V;
-yb[0] = rs_n->q;
-
-for (int i=0; i<n-1 ; i++)
-{
-  k1= h*fun_v( ya[i] , yb[i] , rs_n->sigma_f , rs_n->inj_cur*rs_n->inj_cur_MultiplicationFactor ,  rs_n->tao_m , rs_n->Af ); 
-  l1 = h*fun_q( ya[i] , yb[i] , rs_n->tao_s , rs_n->Es , rs_n->sigma_s ); 
-
-  k2= h*fun_v( ya[i]+k1/2 , yb[i]+l1/2 , rs_n->sigma_f , rs_n->inj_cur*rs_n->inj_cur_MultiplicationFactor , rs_n->tao_m , rs_n->Af ); 
-  l2 = h*fun_q( ya[i]+k1/2 , yb[i]+l1/2 , rs_n->tao_s , rs_n->Es , rs_n->sigma_s);   
-  
-  k3= h*fun_v( ya[i]+k2/2 , yb[i]+l2/2 , rs_n->sigma_f , rs_n->inj_cur*rs_n->inj_cur_MultiplicationFactor , rs_n->tao_m , rs_n->Af ); 
-  l3 = h*fun_q( ya[i]+k2/2 , yb[i]+l2/2 , rs_n->tao_s , rs_n->Es , rs_n->sigma_s );   
-
-  k4= h*fun_v( ya[i]+k3 , yb[i]+l3 , rs_n->sigma_f , rs_n->inj_cur*rs_n->inj_cur_MultiplicationFactor , rs_n->tao_m , rs_n->Af ); 
-  l4 = h*fun_q( ya[i]+k3 , yb[i]+l3 , rs_n->tao_s , rs_n->Es , rs_n->sigma_s );   
-  
-  k = 1/6.0 * (k1 + 2*k2 + 2*k3 + k4);
-  l  = 1/6.0 * ( l1 + 2*l2  + 2*l3  +  l4);
- 
-  ya[i+1]= ya[i]+k;
-  yb[i+1]= yb[i]+l ;
-  //xa[i+1]= xa[i]+h;
-} 
-rs_n->V = ya[n-1]; 
-rs_n->q = yb[n-1]; 
-
-return; 
-}
-/******************/ 
-void setup_RS_neurons(struct RSneuron* rs_n,struct Pattern myP, String str)
-{
-for(int i=0 ; i<(sizeof(str) / sizeof(str[0])) ; i++) 
-     rs_n->discription[i] = str[i]; 
-
-rs_n->tao_m = myP.tao_m; 
-rs_n->tao_s = 20 * myP.tao_m; 
-rs_n->sigma_s = myP.sigma_s;
-rs_n->sigma_f = myP.sigma_f;
-rs_n->inj_cur_MultiplicationFactor = myP.InjCurrentMultiplicationFactor;
-
-}
-/******************/ 
-void update_locomotion_network(void)
-{
-for (int i = 0; i< NOMBER_RS_NEURONS ; i++)
-  update_RS_neuron(&rs_neuron[i]);
-}
+uint8_t id = DXL_ID;
 
 void setup() {
-  /* set the configuration of the RS neuron to match a desired output: OSCILLATORY, QUIESCENT, PLATEAU, ALMOSTOSC */
-  setup_RS_neurons(&rs_neuron[0],OSCILLATORY,"First neuron");
   // put your setup code here, to run once:
   Serial.begin(115200);
   while(!Serial.available());
@@ -177,7 +68,8 @@ String a;
   {
     a= Serial.readString();// read the incoming data as string
     Serial.println(a); 
-    dxl_new_id = a.toInt();
+    //dxl_new_id = a.toInt();
+
     delay(2000);
   }
 
@@ -215,23 +107,30 @@ String a;
     
 
 
-  // Change ID
-  for(int id=0;id<=253;id++)
-  {
-  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
-  delay(10);
-  }
-  //settorque
-  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
- // delay(100);
-  int new_torque_max = 1023;
-  int new_torque = 512;
-  // or  new_torque 1023, or 512 
-  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
-  //delay(10);
-  int new_speed = 512;
-  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MOVING_SPEED , new_speed, &dxl_error);
+//  // Change ID
+//  for(int id=0;id<=253;id++)
+//  {
+//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
+//  delay(10);
+//  }
+//  //settorque
+//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
+// // delay(100);
+//  int new_torque_max = 1023;
+//  int new_torque = 512;
+//  // or  new_torque 1023, or 512 
+//  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
+//  //delay(10);
+//  int new_speed = 512;
+//  
+//  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MOVING_SPEED , new_speed, &dxl_error);
   
+  int CW_limit = 75;
+  int CCW_limit = 948;
+  
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CW_ANGLE_LIMIT, CW_limit, &dxl_error);
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CCW_ANGLE_LIMIT, CCW_limit, &dxl_error);
+
 }
 
 
@@ -250,8 +149,7 @@ void loop() {
   float pai = 3.1415;
  // float time = (millis()/1000);
  
- //goalPosition = mean + amplitude * std::sin(2 * pai * frequency * 0.002*j);
-    goalPosition = (rs_neuron[0].V *50)+250
+    goalPosition = mean + amplitude * std::sin(2 * pai * frequency * 0.002*j);
     packetHandler->read2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
      Serial.print("ID : ");
     Serial.print(dxl_new_id);

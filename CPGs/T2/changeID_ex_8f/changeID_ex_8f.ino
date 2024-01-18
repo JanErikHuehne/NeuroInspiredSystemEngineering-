@@ -11,6 +11,8 @@
 #define ADDR_AX_GOAL_POSITION           30
 #define ADDR_AX_PRESENT_POSITION        36
 #define ADDR_AX_MOVING_SPEED            32
+#define ADDR_AX_CW_ANGLE_LIMIT          6
+#define ADDR_AX_CW_ANGLE_LIMIT          8
 #define MOVING                          46
 
 // Protocol version
@@ -101,23 +103,30 @@ String a;
     
 
 
-  // Change ID
-  for(int id=0;id<=253;id++)
-  {
-  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
-  delay(10);
-  }
-  //settorque
-  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
- // delay(100);
-  int new_torque_max = 1023;
-  int new_torque = 512;
-  // or  new_torque 1023, or 512 
-  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
-  //delay(10);
-  int new_speed = 512;
-  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MOVING_SPEED , new_speed, &dxl_error);
+//  // Change ID
+//  for(int id=0;id<=253;id++)
+//  {
+//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
+//  delay(10);
+//  }
+//  //settorque
+//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
+// // delay(100);
+//  int new_torque_max = 1023;
+//  int new_torque = 512;
+//  // or  new_torque 1023, or 512 
+//  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
+//  //delay(10);
+//  int new_speed = 512;
+//  
+//  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MOVING_SPEED , new_speed, &dxl_error);
   
+  int CW_limit = 75;
+  int CCW_limit = 948;
+  
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CW_ANGLE_LIMIT, CW_limit, &dxl_error);
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CCW_ANGLE_LIMIT, CCW_limit, &dxl_error);
+
 }
 
 
