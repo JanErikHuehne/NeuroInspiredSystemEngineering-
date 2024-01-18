@@ -6,7 +6,7 @@
 #include <DynamixelSDK.h>
 //#include <iostream>
 #include <cmath>
-
+#define LONG_VAL                        512
 #define ADDR_AX_ID           3                 
 #define ADDR_AX_MAX_TORQUE              34 
 #define ADDR_AX_TORQUE_ENABLE           24                 // Control table address is different in Dynamixel model
@@ -14,7 +14,7 @@
 #define ADDR_AX_PRESENT_POSITION        36
 #define ADDR_AX_MOVING_SPEED            32
 #define ADDR_AX_CW_ANGLE_LIMIT          6
-#define ADDR_AX_CW_ANGLE_LIMIT          8
+#define ADDR_AX_CCW_ANGLE_LIMIT          8
 #define MOVING                          46
 
 // Protocol version
@@ -68,7 +68,7 @@ String a;
   {
     a= Serial.readString();// read the incoming data as string
     Serial.println(a); 
-    //dxl_new_id = a.toInt();
+    dxl_new_id = a.toInt();
 
     delay(2000);
   }
@@ -107,26 +107,26 @@ String a;
     
 
 
-//  // Change ID
-//  for(int id=0;id<=253;id++)
-//  {
-//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
-//  delay(10);
-//  }
-//  //settorque
-//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
-// // delay(100);
-//  int new_torque_max = 1023;
-//  int new_torque = 512;
-//  // or  new_torque 1023, or 512 
-//  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
-//  //delay(10);
-//  int new_speed = 512;
+  // Change ID
+  for(int id=0;id<=253;id++)
+  {
+  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
+  delay(10);
+  }
+  //settorque
+  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_new_id, ADDR_AX_TORQUE_ENABLE, 1, &dxl_error);
+ // delay(100);
+  int new_torque_max = 1023;
+  int new_torque = 512;
+  // or  new_torque 1023, or 512 
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MAX_TORQUE, new_torque, &dxl_error);
+  //delay(10);
+  int new_speed = 512;
 //  
 //  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_MOVING_SPEED , new_speed, &dxl_error);
   
-  int CW_limit = 75;
-  int CCW_limit = 948;
+  int CW_limit = LONG_VAL -258;
+  int CCW_limit = LONG_VAL + 258;
   
   dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CW_ANGLE_LIMIT, CW_limit, &dxl_error);
   dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, ADDR_AX_CCW_ANGLE_LIMIT, CCW_limit, &dxl_error);
@@ -149,12 +149,12 @@ void loop() {
   float pai = 3.1415;
  // float time = (millis()/1000);
  
-    goalPosition = mean + amplitude * std::sin(2 * pai * frequency * 0.002*j);
+    goalPosition = LONG_VAL + amplitude * std::sin(2 * pai * frequency * 0.002*j);
     packetHandler->read2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
      Serial.print("ID : ");
     Serial.print(dxl_new_id);
     Serial.print("\t Present Position : ");
-    Serial.print(dxl_present_position);
+    Serial.print((dxl_present_position- LONG_VAL)* 0.29);
     Serial.print("\n");
   }
   //goalPosition = mean + amplitude * std::sin(2 * pai * frequency * time);
