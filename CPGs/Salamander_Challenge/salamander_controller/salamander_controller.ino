@@ -17,10 +17,10 @@
 #define DT 0.1
 #define INPUT_SIGNAL 2.5
 #define SCALING_FACTOR1 100.0
-#define SCALING_FACTOR2 300.0
-#define SCALING_FACTOR3 350.0
+#define SCALING_FACTOR2 150.0
+#define SCALING_FACTOR3 200.0
 #define OFFSET 510.0
-
+#define QUEUE_SIZE 100
 #define ADDR_AX_ID           3                 
 #define ADDR_AX_MAX_TORQUE              34 
 #define ADDR_AX_TORQUE_ENABLE           24                 // Control table address is different in Dynamixel model
@@ -33,7 +33,11 @@
 #define PROTOCOL_VERSION                1.0   
 
 #define BAUDRATE                        1000000
-#define DEVICENAME                      "1"      
+#define DEVICENAME                      "1"   
+
+int sensorValues[QUEUE_SIZE] = {0};
+int sensorValues1[QUEUE_SIZE] = {0};
+int currentIndex = 0;
 
 // Create PortHandler instance
 dynamixel::PortHandler *portHandler;
@@ -269,6 +273,13 @@ void initializeNeuron(struct MatsuokaNeuron *neuron, int id) {
     neuron->ode_solver = test_ode_solver;
 } 
 
+float calculateAverage(int queue[], int size) {
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        sum += queue[i];
+    }
+    return (float)sum / size;
+}
 
 
 
@@ -353,25 +364,63 @@ void loop() {
         myNetwork.ode_solver = network_ode_solver;
         initialized = true;
     }
-
-   
+    
+    float pin0 = analogRead(0);
+    sensorValues[currentIndex] = pin0;
+    float pin1 = analogRead(1);
+    sensorValues1[currentIndex] = pin1;
+    currentIndex = (currentIndex + 1) % QUEUE_SIZE;
+    float averageleft = calculateAverage(sensorValues, QUEUE_SIZE);
+    float averageright = calculateAverage(sensorValues1, QUEUE_SIZE);
+    float myval = averageleft+527.0-averageright;
+    if (fabs(myval) <= 5.0) {
+      myval = 0.0;
+    }
+    if (myval <0.0) {
+      myval = myval / 6.0;
+    }
+    
+//    float pin22 = analogRead(22);
+//    float pin22 = analogRead(22);
+//    float pin22 = analogRead(22);
+//    float pin22 = analogRead(22);
+//    
+    
     myNetwork.ode_solver(&myNetwork, DT, INPUT_SIGNAL);
     if (mytime > 20000){
         for (int j = 0; j < ASSEMBLE_COUNT; j++) {
 
         float result = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x);
-        if (j < 2){
+        if (j == 1){
+          //float right = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x);
+          //float left = myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[0].x);
+          if (myval < 0.0) {
+             result = ((result)*SCALING_FACTOR1) + OFFSET - 100.0;
+          }
+          else if (myval > 0.0) {
+            result = ((result)*SCALING_FACTOR1) + OFFSET + 100.0;
+          }
+          else {
+            result = ((result)*SCALING_FACTOR1) + OFFSET;
+          }
+         
+        }
+        else  if (j < 3){
             result = (result*SCALING_FACTOR1) + OFFSET;
         }
-//        else if (2 < j < 4){
-//            result = (result*SCALING_FACTOR2) + OFFSET;
-//        }
+
+        else if (j == 3 ){
+          result = (result*SCALING_FACTOR1) + OFFSET+100;
+          }
         else{
-            result = (result*SCALING_FACTOR2) + OFFSET;
+            result = (result*SCALING_FACTOR1) + OFFSET;
         }
      
         dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, j+1, ADDR_AX_GOAL_POSITION, result, &dxl_error);
-        Serial.print(myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x) );
+        if (j ==0){Serial.println(j);
+        Serial.println(result);}
+        Serial.println(myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x) );
+        
        String a;
         if(Serial.available())
         {       
