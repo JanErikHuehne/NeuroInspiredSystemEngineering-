@@ -16,9 +16,9 @@
 #define UPDATE_INTERVAL 100
 #define DT 0.1
 #define INPUT_SIGNAL 2.5
-#define SCALING_FACTOR1 120.0
-#define SCALING_FACTOR2 200.0
-#define SCALING_FACTOR3 250.0
+#define SCALING_FACTOR1 100.0
+#define SCALING_FACTOR2 300.0
+#define SCALING_FACTOR3 350.0
 #define OFFSET 510.0
 
 #define ADDR_AX_ID           3                 
@@ -316,7 +316,7 @@ void setup() {
 void loop() { 
   /* Read my program running time in milliseconds */
     static struct MatsuokaNetwork myNetwork;
-
+    unsigned long mytime = millis();
     float w_0 = 0.1;    // Weights between the assembles
 
     if (!initialized) {
@@ -356,7 +356,8 @@ void loop() {
 
    
     myNetwork.ode_solver(&myNetwork, DT, INPUT_SIGNAL);
-    for (int j = 0; j < ASSEMBLE_COUNT; j++) {
+    if (mytime > 20000){
+        for (int j = 0; j < ASSEMBLE_COUNT; j++) {
 
         float result = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x);
         if (j < 2){
@@ -366,7 +367,7 @@ void loop() {
 //            result = (result*SCALING_FACTOR2) + OFFSET;
 //        }
         else{
-            result = (result*SCALING_FACTOR3) + OFFSET;
+            result = (result*SCALING_FACTOR2) + OFFSET;
         }
      
         dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, j+1, ADDR_AX_GOAL_POSITION, result, &dxl_error);
@@ -377,7 +378,12 @@ void loop() {
           stopFlag =1;
           
         }
-     }  
+    }}
+    else{
+      Serial.println(mytime);
+    delay(300);
+    }
+    
     
   
 

@@ -54,17 +54,7 @@ int16_t dxl_present_position = 0;               // Present position
 uint8_t dxl_new_id = DXL_NEW_ID; 
 
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  while(!Serial.available());
-String a;
-  if(Serial.available())
-  {
-    a= Serial.readString();// read the incoming data as string
-    Serial.println(a); 
-    dxl_new_id = a.toInt();
-    delay(2000);
-  }
+  
 
   // Initialize portHandler. Set the port path
   // Get methods and members of PortHandlerLinux or PortHandlerWindows
@@ -117,6 +107,17 @@ String a;
 
 
 void loop() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  while(!Serial.available());
+String a;
+  if(Serial.available())
+  {
+    a= Serial.readString();// read the incoming data as string
+    Serial.println(a); 
+    dxl_new_id = a.toInt();
+    delay(2000);
+  }
   // put your main code here, to run repeatedly:
   packetHandler->read1ByteTxRx(portHandler, dxl_new_id, MOVING, (uint8_t*)&isMoving, &dxl_error);
    for (int j = 0; j<1000; j++) {
