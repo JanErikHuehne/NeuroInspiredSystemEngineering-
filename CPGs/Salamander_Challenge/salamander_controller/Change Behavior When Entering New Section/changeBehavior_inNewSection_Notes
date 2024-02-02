@@ -1,11 +1,16 @@
 
 // To change the behavior there should be a trigger from the sensors. 
-// For the stimulation I used either "myval" positive or negative:
+// For the stimulation I used either "sensoryTrigger" positive or negative:
 // positive for changing to a wider motion      --> from narrow section to a wider section
 // negative for changing to a narrower motion   --> from wider section to a narrower section
 // Choose maybe another way to trigger it like when both sensors are active then go to narrrower behavior etc.
 
 //---------------------------------
+
+// Add these two at the begginin under LINE 40 ------------------------------------
+float input_signal = 5;      // u_0 to change the number of s shapes smoothly
+float curr_input_signal = 5; // to keep the old input signal when the signal starts changing after sensory trigger to change behavior for new section
+//---------------------------------------------------------------------------------
 
 //.... rest of the code till here 
 float pin0 = analogRead(0);
@@ -16,14 +21,13 @@ currentIndex = (currentIndex + 1) % QUEUE_SIZE;
 float averageleft = calculateAverage(sensorValues, QUEUE_SIZE);
 float averageright = calculateAverage(sensorValues1, QUEUE_SIZE);
 float myval = averageleft+527.0-averageright; // both sensor inactive, myval =0; left sensor active --> bend right: myvalue positive, right sensor active --> bend left: myvalue negativem amplitude f
-//----------------------------
-bool sensory_input = false;
-double sensory_start_time = 0;
-double timeAfterInput = 0;
-double totalChange_inAmplitude = 0;
-int changeOscillation = 0; // specify the direction of oscillation change, -1 for lower amplitude, 1 for higher
-
-//----------------------------
+//-----------NEW VARIABLES HERE----------------- 
+float sensoryTrigger = 0.0;     // Sensory trigger is zero for keeping movement with the same amplitude, if positive change to bigger amplitude, if negative to smaller amplitude
+bool sensory_input = false;     // sensory input flag
+double sensory_start_time = 0;  // sensory trigger start time point
+double timeAfterInput = 0;      // passed time after sensory input arrived for the first time -> used to change the input signal smoothly
+int changeOscillation = 0;      // specify the direction of oscillation change, -1 for lower amplitude, 1 for higher
+// ----------------------------------
 
 //.... rest of the code after
 
@@ -32,49 +36,50 @@ int changeOscillation = 0; // specify the direction of oscillation change, -1 fo
 
 
 //.... rest of the code till here 
-myNetwork.ode_solver(&myNetwork, DT, INPUT_SIGNAL); // THIS IS LINE 389 IN THE REPOSTIORY
-    if (mytime > 20000){
-        // ---------NEW CODE PART---------------------- COPY AND PASTE THIS CODE PART BEFORE LOOPING ASSEMBLES
-        if (myval != 0.0) {
-            sensory_input = true;
-        }
+ 
+    // ---------NEW CODE PART---------------------- COPY AND PASTE THIS CODE PART BEFORE LOOPING ASSEMBLES
+    if (sensoryTrigger != 0.0) {
+        sensory_input = true;
+    }
                 
-        if(sensory_input){
+    if(sensory_input){
 
-            timeAfterInput = mytime - sensory_start_time;
+        timeAfterInput = mytime - sensory_start_time;
 
-            if(changeOscillation > 0){ // change to higher amplitude S-shapes
-                input_signal = (timeAfterInput/400) + curr_input_signal;
+        if(changeOscillation > 0){ // change to higher amplitude S-shapes
+            input_signal = (timeAfterInput/400) + curr_input_signal;
+    
+            if(input_signal > curr_input_signal*3){
+                sensory_input = false;
+            }
+        }
+        else if(changeOscillation < 0){ // change to lower amplitude S-shapes
+            input_signal = -(timeAfterInput/1000)/1.5 + curr_input_signal;
+
+            if(input_signal < (curr_input_signal/3)){
+                sensory_input = false;
+            }
+        }
         
-                if(input_signal > curr_input_signal*3){
-                    sensory_input = false;
-                }
+    }
+    if (sensoryTrigger != 0.0){ // There is a trigger to change the behavior for another section
+        if(sensory_input == false){ // First time triggered
+            if(sensoryTrigger > 0.0){ // Positive behavior change -> change to higher amplitudes
+                changeOscillation = 1;
             }
-            else if(changeOscillation < 0){ // change to lower amplitude S-shapes
-                input_signal = -(timeAfterInput/1000)/1.5 + curr_input_signal;
-
-                if(input_signal < (curr_input_signal/3)){
-                    sensory_input = false;
-                }
+            if(sensoryTrigger < 0.0){ // Negative behavior change -> change to lower amplitudes
+                changeOscillation = -1;
             }
-            
+            curr_input_signal = input_signal; // Save the current input signal as it will change starting from trigger point
+            sensory_start_time = millis(); // save the trigger time to change behavior as the input signal will start changing from this point
+            sensory_input = true; // sensory input arrived flag
         }
-        if (myval != 0.0){ // There is a trigger to change the behavior for another section
-            if(sensory_input == false){ // First time triggered
-                if(myval > 0.0){ // Positive behavior change -> change to higher amplitudes
-                    changeOscillation = 1;
-                }
-                if(myval < 0.0){ // Negative behavior change -> change to lower amplitudes
-                    changeOscillation = -1;
-                }
-                curr_input_signal = input_signal; // Save the current input signal as it will change starting from trigger point
-                sensory_start_time = millis(); // save the trigger time to change behavior as the input signal will start changing from this point
-                sensory_input = true; // sensory input arrived flag
-            }
 
-        }
-        // ---------NEW CODE PART----------------------
-
+    }
+    // ---------NEW CODE PART-------------------------------------------------------------------
+    
+    myNetwork.ode_solver(&myNetwork, DT, input_signal); // THIS IS LINE 389 IN THE REPOSTIORY
+    if (mytime > 20000){
         for (int j = 0; j < ASSEMBLE_COUNT; j++) { // THIS IS LINE 391 IN REPOSITORY
 
             float result = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x);
