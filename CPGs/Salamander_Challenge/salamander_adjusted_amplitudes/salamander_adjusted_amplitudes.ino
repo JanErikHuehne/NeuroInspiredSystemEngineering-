@@ -20,7 +20,7 @@
 #define SCALING_FACTOR2 150.0
 #define SCALING_FACTOR3 200.0
 #define OFFSET 510.0
-#define QUEUE_SIZE 50
+#define QUEUE_SIZE 100
 #define ADDR_AX_ID           3                 
 #define ADDR_AX_MAX_TORQUE              34 
 #define ADDR_AX_TORQUE_ENABLE           24                 // Control table address is different in Dynamixel model
@@ -34,13 +34,11 @@
 
 #define BAUDRATE                        1000000
 #define DEVICENAME                      "1"   
-int bias0[300] = {0};
-int bias1[300] = {0};
+
 int sensorValues[QUEUE_SIZE] = {0};
 int sensorValues1[QUEUE_SIZE] = {0};
 int currentIndex = 0;
-int biasindex = 0;
-float turning_offset = 0.0;
+
 // Create PortHandler instance
 dynamixel::PortHandler *portHandler;
 
@@ -368,87 +366,83 @@ void loop() {
     }
     
     float pin0 = analogRead(0);
-    
     sensorValues[currentIndex] = pin0;
     float pin1 = analogRead(1);
     sensorValues1[currentIndex] = pin1;
-   
-    //currentIndex = (currentIndex + 1) % QUEUE_SIZE;
-    //float averageleft = calculateAverage(sensorValues, QUEUE_SIZE);
-    //Serial.println(pin1-pin0 -500);
-    //pin0 is in values between 0 ND 20
-    //Pin1 is in values between 0 and 200
-    //float averageright = calculateAverage(sensorValues1, QUEUE_SIZE);
-    //float myval = averageleft+527.0-averageright;
-     ///516, 800 max
-    bias1[biasindex] = pin1;
-   
-    biasindex = (biasindex + 1) % 2000;
-    pin1 = (pin1 - calculateAverage(bias1, 300)) / 250.0; 
-    
-
-    // values pin1 are bigger than 0.1, if right pin is tocuhed
-    bias0[biasindex] = pin0;
-   
-    biasindex = (biasindex + 1) % 300;
-    pin0 = ((pin0 -  calculateAverage(bias0, 300) ) / 57.0) -0.3;
-    //Serial.println(fabs(pin0));
-    
-   
-    float myval = pin0-pin1;
-     
-    if (fabs(myval) <= 0.1) {
+    currentIndex = (currentIndex + 1) % QUEUE_SIZE;
+    float averageleft = calculateAverage(sensorValues, QUEUE_SIZE);
+    float averageright = calculateAverage(sensorValues1, QUEUE_SIZE);
+    float myval = averageleft+527.0-averageright;
+    if (fabs(myval) <= 5.0) {
       myval = 0.0;
     }
-
-    float left = fabs(pin0);
-    float right = fabs(pin1);
-     
-   // Serial.println(myval);
-    if (left > 0.2) {
-      turning_offset = turning_offset - 20.0;
+    if (myval <0.0) {
+      myval = myval / 6.0;
     }
-    else if (right > 0.2) {
-      turning_offset = turning_offset + 20.0;
-    }
-//    Serial.println("sesnors = ");
-//    Serial.println(myval);
-    turning_offset = 0.95*turning_offset;
-    if (turning_offset < -100.0) {
-      turning_offset = -100.0;
-    }
-    if (turning_offset > 100.0) {
-      turning_offset = 100.0;
-    }
-    sensorValues[currentIndex] = turning_offset;
-   
-    currentIndex = (currentIndex + 1) % QUEUE_SIZE;
-    float turning = calculateAverage(sensorValues, QUEUE_SIZE);
-    Serial.println(turning);
+    float sensoryTrigger = 0.0;     // Sensory trigger is zero for keeping movement with the same amplitude, if positive change to bigger amplitude, if negative to smaller amplitude
+    bool sensory_input = false;     // sensory input flag
+    double sensory_start_time = 0;  // sensory trigger start time point
+    double timeAfterInput = 0;      // passed time after sensory input arrived for the first time -> used to change the input signal smoothly
+    int changeOscillation = 0;      // specify the direction of oscillation change, -1 for lower amplitude, 1 for higher
+    
 //    float pin22 = analogRead(22);
 //    float pin22 = analogRead(22);
 //    float pin22 = analogRead(22);
 //    float pin22 = analogRead(22);
 //    
+    if (sensoryTrigger != 0.0) {
+        sensory_input = true;
+    }
+    float input_signal;
+    float curr_input_signal;            
+    if(sensory_input){
+
+        timeAfterInput = mytime - sensory_start_time;
+
+        if(changeOscillation > 0){ // change to higher amplitude S-shapes
+            input_signal = (timeAfterInput/400) + curr_input_signal;
     
+            if(input_signal > curr_input_signal*3){
+                sensory_input = false;
+            }
+        }
+        else if(changeOscillation < 0){ // change to lower amplitude S-shapes
+            input_signal = -(timeAfterInput/1000)/1.5 + curr_input_signal;
+
+            if(input_signal < (curr_input_signal/3)){
+                sensory_input = false;
+            }
+        }
+        
+    }
+    if (sensoryTrigger != 0.0){ // There is a trigger to change the behavior for another section
+        if(sensory_input == false){ // First time triggered
+            if(sensoryTrigger > 0.0){ // Positive behavior change -> change to higher amplitudes
+                changeOscillation = 1;
+            }
+            if(sensoryTrigger < 0.0){ // Negative behavior change -> change to lower amplitudes
+                changeOscillation = -1;
+            }
+            
+            curr_input_signal = input_signal; // Save the current input signal as it will change starting from trigger point
+            sensory_start_time = millis(); // save the trigger time to change behavior as the input signal will start changing from this point
+            sensory_input = true; // sensory input arrived flag
+        }
+
+    }
+
     myNetwork.ode_solver(&myNetwork, DT, INPUT_SIGNAL);
-    if (mytime > 2000){
+    if (mytime > 20000){
         for (int j = 0; j < ASSEMBLE_COUNT; j++) {
 
         float result = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x);
-
-
         if (j == 0) {
-
-        result = (result*80.0) + OFFSET - turning;
+           result = (result*80.0) + OFFSET;
         }
-        
         else if (j == 1) {
-           result = (result*80.0) + OFFSET - turning; //}
-        }
-        
+           result = (result*80.0) + OFFSET;
           
-        
+        }
          else if (j == 2) {
            result = (result*125.0) + OFFSET;
         }
@@ -470,10 +464,9 @@ void loop() {
         
         
         dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, j+1, ADDR_AX_GOAL_POSITION, result, &dxl_error);
-//        if (j ==0){Serial.println(j);
-//        //Serial.println(result);
-//        }
-        //Serial.println(myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x) );
+        if (j ==0){Serial.println(j);
+        Serial.println(result);}
+        Serial.println(myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x) );
         
        String a;
         if(Serial.available())
@@ -483,7 +476,7 @@ void loop() {
         }
     }}
     else{
-      //Serial.println(mytime);
+      Serial.println(mytime);
     delay(300);
     }
     
