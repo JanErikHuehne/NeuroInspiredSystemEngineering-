@@ -1,0 +1,101 @@
+
+// To change the behavior there should be a trigger from the sensors. 
+// For the stimulation I used either "myval" positive or negative:
+// positive for changing to a wider motion      --> from narrow section to a wider section
+// negative for changing to a narrower motion   --> from wider section to a narrower section
+// Choose maybe another way to trigger it like when both sensors are active then go to narrrower behavior etc.
+
+//---------------------------------
+
+//.... rest of the code till here 
+float pin0 = analogRead(0);
+sensorValues[currentIndex] = pin0;
+float pin1 = analogRead(1);
+sensorValues1[currentIndex] = pin1;
+currentIndex = (currentIndex + 1) % QUEUE_SIZE;
+float averageleft = calculateAverage(sensorValues, QUEUE_SIZE);
+float averageright = calculateAverage(sensorValues1, QUEUE_SIZE);
+float myval = averageleft+527.0-averageright; // both sensor inactive, myval =0; left sensor active --> bend right: myvalue positive, right sensor active --> bend left: myvalue negativem amplitude f
+//----------------------------
+bool sensory_input = false;
+double sensory_start_time = 0;
+double timeAfterInput = 0;
+double totalChange_inAmplitude = 0;
+int changeOscillation = 0; // specify the direction of oscillation change, -1 for lower amplitude, 1 for higher
+
+//----------------------------
+
+//.... rest of the code after
+
+
+
+
+
+//.... rest of the code till here 
+myNetwork.ode_solver(&myNetwork, DT, INPUT_SIGNAL); // THIS IS LINE 389 IN THE REPOSTIORY
+    if (mytime > 20000){
+        // ---------NEW CODE PART---------------------- COPY AND PASTE THIS CODE PART BEFORE LOOPING ASSEMBLES
+        if (myval != 0.0) {
+            sensory_input = true;
+        }
+                
+        if(sensory_input){
+
+            timeAfterInput = mytime - sensory_start_time;
+
+            if(changeOscillation > 0){ // change to higher amplitude S-shapes
+                input_signal = (timeAfterInput/400) + curr_input_signal;
+        
+                if(input_signal > curr_input_signal*3){
+                    sensory_input = false;
+                }
+            }
+            else if(changeOscillation < 0){ // change to lower amplitude S-shapes
+                input_signal = -(timeAfterInput/1000)/1.5 + curr_input_signal;
+
+                if(input_signal < (curr_input_signal/3)){
+                    sensory_input = false;
+                }
+            }
+            
+        }
+        if (myval != 0.0){ // There is a trigger to change the behavior for another section
+            if(sensory_input == false){ // First time triggered
+                if(myval > 0.0){ // Positive behavior change -> change to higher amplitudes
+                    changeOscillation = 1;
+                }
+                if(myval < 0.0){ // Negative behavior change -> change to lower amplitudes
+                    changeOscillation = -1;
+                }
+                curr_input_signal = input_signal; // Save the current input signal as it will change starting from trigger point
+                sensory_start_time = millis(); // save the trigger time to change behavior as the input signal will start changing from this point
+                sensory_input = true; // sensory input arrived flag
+            }
+
+        }
+        // ---------NEW CODE PART----------------------
+
+        for (int j = 0; j < ASSEMBLE_COUNT; j++) { // THIS IS LINE 391 IN REPOSITORY
+
+            float result = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x);
+            // ------ NOW THIS IS THE ONLY THING WE NEED -> TO CHANGE THE MOTOR 4 AMPLITUDE -> FOR A HIGHER AMPLITUDE IN THE TAIL-------
+            if(j == 3){
+                result = (result*SCALING_FACTOR1) + OFFSET + 100.0;
+            }
+            else{
+                result = (result*SCALING_FACTOR1) + OFFSET;
+            }
+            // ---------------------------------------------------------------------
+            dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, j+1, ADDR_AX_GOAL_POSITION, result, &dxl_error);
+            if(j == 0){
+                Serial.println(j);
+                Serial.println(result);
+            }
+
+        }
+    }
+    else{
+      Serial.println(mytime);
+        delay(300);
+    }
+}  // THIS IS THE BRACET THAT CLOSES VOID LOOP
