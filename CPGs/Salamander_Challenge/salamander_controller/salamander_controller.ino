@@ -391,14 +391,17 @@ void loop() {
         for (int j = 0; j < ASSEMBLE_COUNT; j++) {
 
         float result = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x) - myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[1].x);
+
+
+        /*
         if (j == 1){
           //float right = myNetwork.assemble[j].neurons[0].neuronOutput(myNetwork.assemble[j].neurons[0].x);
           //float left = myNetwork.assemble[j].neurons[1].neuronOutput(myNetwork.assemble[j].neurons[0].x);
           if (myval < 0.0) {
-             result = ((result)*SCALING_FACTOR1) + OFFSET - 100.0;
+             result = ((result)*SCALING_FACTOR1) + OFFSET - 0.0;
           }
           else if (myval > 0.0) {
-            result = ((result)*SCALING_FACTOR1) + OFFSET + 100.0;
+            result = ((result)*SCALING_FACTOR1) + OFFSET + 0.0;
           }
           else {
             result = ((result)*SCALING_FACTOR1) + OFFSET;
@@ -415,7 +418,34 @@ void loop() {
         else{
             result = (result*SCALING_FACTOR1) + OFFSET;
         }
-     
+        */
+        if (j == 0) {
+           result = (result*80.0) + OFFSET;
+        }
+        else if (j == 1) {
+           result = (result*80.0) + OFFSET;
+          
+        }
+         else if (j == 2) {
+           result = (result*125.0) + OFFSET;
+        }
+         else if (j == 3) {
+           result = (result*250.0) + OFFSET;
+          
+        }
+         else if (j == 4) {
+           result = (result*300.0) + OFFSET;
+          
+        }
+        else if (j == 5) {
+
+           result = (result*300.0) + OFFSET;
+        }
+        else if (j == 6) {
+           result = (result*300.0) + OFFSET;
+        }
+        
+        
         dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, j+1, ADDR_AX_GOAL_POSITION, result, &dxl_error);
         if (j ==0){Serial.println(j);
         Serial.println(result);}

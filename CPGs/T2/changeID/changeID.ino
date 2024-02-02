@@ -55,7 +55,16 @@ uint8_t dxl_new_id = DXL_NEW_ID;
 
 void setup() {
   
-
+   Serial.begin(115200);
+  while(!Serial.available());
+String a;
+  if(Serial.available())
+  {
+    a= Serial.readString();// read the incoming data as string
+    Serial.println(a); 
+    dxl_new_id = a.toInt();
+    delay(2000);
+  }
   // Initialize portHandler. Set the port path
   // Get methods and members of PortHandlerLinux or PortHandlerWindows
   portHandler = dynamixel::PortHandler::getPortHandler(DEVICENAME);
@@ -108,27 +117,18 @@ void setup() {
 
 void loop() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
-  while(!Serial.available());
-String a;
-  if(Serial.available())
-  {
-    a= Serial.readString();// read the incoming data as string
-    Serial.println(a); 
-    dxl_new_id = a.toInt();
-    delay(2000);
-  }
+ 
   // put your main code here, to run repeatedly:
   packetHandler->read1ByteTxRx(portHandler, dxl_new_id, MOVING, (uint8_t*)&isMoving, &dxl_error);
    for (int j = 0; j<1000; j++) {
   if( isMoving == 0 ){ //if Dynamixel is stopped
     //Send instruction packet to move for goalPosition
     dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_GOAL_POSITION, goalPosition, &dxl_error);
-    //toggle the position if goalPosition is 1000, set to 0, if 0, set to 1000
-//    if(goalPosition == 700)
-//      goalPosition = 0;
-//    else
-//      goalPosition = 700;
+//    toggle the position if goalPosition is 1000, set to 0, if 0, set to 1000
+    if(goalPosition == 700)
+      goalPosition = 0;
+    else
+      goalPosition = 700;
   float pai = 3.1415;
  // float time = (millis()/1000);
  
