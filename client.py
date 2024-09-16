@@ -12,13 +12,20 @@ import copy
 from sklearn import tree
 import pickle
 from pathlib import Path
+import time
+
 
 class Client:
 
     def __init__(self,):
+        # Variables for validation
+        self.start_time = 0
+        self.counterCollected = 0
+        self.end_time = 0
+
         # Set up main window
         self.save = True 
-        self.save_file = Path("./data2/nine.txt").absolute()
+        self.save_file = Path("./data3/RnR.txt").absolute()
         self.root = tk.Tk()
         self.root.geometry("920x650")
         self.root.resizable(False, False)
@@ -74,7 +81,7 @@ class Client:
         #detector
         self.detector = HandDetector(maxHands = 2, detectionCon = 0.8) 
 
-        self.clasifier = pickle.load(open("./models/dt_classifier.pickle", "rb"))
+        self.clasifier = pickle.load(open("./models/dt_classifier2.pickle", "rb"))
         # start app 
         self.root.mainloop()
 
@@ -83,10 +90,10 @@ class Client:
 
     def add_values(self):
         variable = self.var
-        for x in range(100):
+        for x in range(40):
             if self.stop_button_event.is_set():
                 return 
-            time.sleep(0.008)
+            time.sleep(0.0008)
             variable.set(x)
         self.collect_next_char_event.set()
         self.next_char_collect_event.wait()
@@ -124,6 +131,7 @@ class Client:
 
         self.collect_char_thread = Thread(target=self.collect_char)
         self.collect_char_thread.start()
+        self.start_time = time.time()
 
 
     def media_pipe_detection(self,):
@@ -164,7 +172,7 @@ class Client:
                     
                 
                 #print(EU[9])
-                return int(self.clasifier.predict(EU[np.newaxis, :])[0])
+                return int(self.clasifier.predict(EU[np.newaxis, :])[0]) # add dictionary/enom for nr to string detection 
                 #return self.detectHandMovement(EU)
         return "Empty"
     def calculateDistances(self, handPoints):
@@ -265,6 +273,15 @@ class Client:
             self.collect_next_char_event.wait()
             # Do something with same frame, pass it to mediapipe in this thread
             print("collected")
+            # self.counterCollected += 1
+            # if self.counterCollected == 10:
+            #     self.end_time = time.time()
+            #     print(f"10 signs executed in {self.end_time - self.start_time:.2f} seconds")
+            #     self.counterCollected = 0
+            #     self.start_time = 0
+            #     self.end_time = 0
+            #     # Set the stop button event to stop the execution
+            #     self.stop_button_event.set()
            
             collected_char = self.media_pipe_detection()
             print(collected_char)
